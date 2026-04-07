@@ -1,0 +1,147 @@
+<div class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+  <div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="text-center mb-12">
+      <h1 class="text-5xl font-bold text-white mb-4 animate-pulse">
+        DNA Mutant Detector
+      </h1>
+      <p class="text-xl text-gray-300">
+        Descubre si una secuencia de ADN pertenece a un mutante
+      </p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto">
+      <!-- Input Section -->
+      <section class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 mb-8 shadow-2xl">
+        <h2 class="text-2xl font-semibold text-white mb-6">Secuencia de ADN</h2>
+        
+        <!-- Text Input -->
+        <div class="mb-6">
+          <label for="dna-input" class="block text-gray-300 mb-2">
+            Ingresa la secuencia (separada por comas):
+          </label>
+          <textarea
+            id="dna-input"
+            [(ngModel)]="dnaInput"
+            (input)="onDNAInput($event)"
+            placeholder="ATGCGA,CAGTGC,TTATGT,AGAAGG,CCCCTA,TCACTG"
+            class="w-full p-4 bg-white bg-opacity-20 border border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="mb-6 p-4 bg-red-500 bg-opacity-20 border border-red-400 rounded-lg">
+          <p class="text-red-200">{{ error }}</p>
+        </div>
+
+        <!-- DNA Grid Visualization -->
+        <div *ngIf="dnaArray.length > 0" class="mb-8">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Visualización del ADN:</h3>
+          <div class="flex justify-center">
+            <div class="inline-block bg-black bg-opacity-30 p-4 rounded-xl">
+              <div class="grid gap-2" [style.grid-template-columns]="'repeat(' + gridSize + ', minmax(0, 1fr))'">
+                <div *ngFor="let row of dnaArray; let i = index" class="flex gap-2">
+                  <div *ngFor="let char of row.split(''); let j = index" 
+                       [ngClass]="getCellClass(i, j)">
+                    {{ char }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-4 justify-center">
+          <button
+            (click)="analyzeDNA()"
+            [disabled]="dnaArray.length === 0 || isLoading"
+            class="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+          >
+            <span *ngIf="!isLoading">Analizar ADN</span>
+            <span *ngIf="isLoading" class="flex items-center">
+              <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Analizando...
+            </span>
+          </button>
+          
+          <button
+            (click)="clearInput()"
+            class="px-8 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-300 transform hover:scale-105"
+          >
+            Limpiar
+          </button>
+          
+          <button
+            (click)="loadExample(true)"
+            class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105"
+          >
+            Ejemplo Mutante
+          </button>
+          
+          <button
+            (click)="loadExample(false)"
+            class="px-6 py-3 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-all duration-300 transform hover:scale-105"
+          >
+            Ejemplo Humano
+          </button>
+        </div>
+      </section>
+
+      <!-- Result Section -->
+      <section *ngIf="isMutant !== null" class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
+        <h2 class="text-2xl font-semibold text-white mb-6">Resultado</h2>
+        
+        <div class="text-center">
+          <div *ngIf="isMutant" class="animate-bounce">
+            <div class="inline-block p-8 bg-green-500 bg-opacity-20 border-2 border-green-400 rounded-full mb-4">
+              <svg class="w-16 h-16 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="text-3xl font-bold text-green-400 mb-2">¡MUTANTE DETECTADO!</h3>
+            <p class="text-gray-300">La secuencia de ADN contiene más de una secuencia de 4 letras idénticas.</p>
+          </div>
+          
+          <div *ngIf="!isMutant" class="animate-pulse">
+            <div class="inline-block p-8 bg-blue-500 bg-opacity-20 border-2 border-blue-400 rounded-full mb-4">
+              <svg class="w-16 h-16 text-blue-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="text-3xl font-bold text-blue-400 mb-2">HUMANO DETECTADO</h3>
+            <p class="text-gray-300">La secuencia de ADN no contiene las características de un mutante.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Info Section -->
+      <section class="mt-12 bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
+        <h2 class="text-2xl font-semibold text-white mb-6">¿Cómo funciona?</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="bg-white bg-opacity-5 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-purple-400 mb-3">Mutantes</h3>
+            <p class="text-gray-300">
+              Se considera mutante cuando se encuentran más de una secuencia de 4 letras idénticas 
+              consecutivamente en horizontal, vertical o diagonal.
+            </p>
+          </div>
+          <div class="bg-white bg-opacity-5 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-blue-400 mb-3">Bases Nitrogenadas</h3>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <span class="px-3 py-1 bg-red-500 bg-opacity-30 text-red-300 rounded">A - Adenina</span>
+              <span class="px-3 py-1 bg-blue-500 bg-opacity-30 text-blue-300 rounded">T - Timina</span>
+              <span class="px-3 py-1 bg-green-500 bg-opacity-30 text-green-300 rounded">C - Citosina</span>
+              <span class="px-3 py-1 bg-yellow-500 bg-opacity-30 text-yellow-300 rounded">G - Guanina</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
